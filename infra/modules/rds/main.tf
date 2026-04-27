@@ -80,9 +80,8 @@ resource "aws_db_instance" "this" {
   backup_window             = var.preferred_backup_window
   maintenance_window        = var.preferred_maintenance_window
   copy_tags_to_snapshot     = true
-  delete_automated_backups  = false
-  final_snapshot_identifier = "${var.name}-final-snapshot"
-  skip_final_snapshot       = false
+  delete_automated_backups  = true
+  skip_final_snapshot       = true
 
   deletion_protection        = var.deletion_protection
   auto_minor_version_upgrade = true
