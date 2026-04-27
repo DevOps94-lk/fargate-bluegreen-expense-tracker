@@ -9,4 +9,4 @@
 
 aws_region = "ap-south-1"
 
-container_image = "697502032879.dkr.ecr.ap-south-1.amazonaws.com/expense-tracker:latest"
+container_image = "697502032879.dkr.ecr.ap-south-1.amazonaws.com/expense-tracker:stable"
