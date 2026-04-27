@@ -166,6 +166,22 @@ jobs:
       # ── Wait for deployment to complete ───────────────────────────────────
       - name: Wait for deployment
         run: |
-          aws deploy wait deployment-successful \
-            --deployment-id ${{ steps.codedeploy.outputs.deployment_id }}
-          echo "Deployment ${{ steps.codedeploy.outputs.deployment_id }} succeeded."
+          DEPLOYMENT_ID=${{ steps.codedeploy.outputs.deployment_id }}
+          echo "Waiting for CodeDeploy deployment $DEPLOYMENT_ID ..."
+          for i in $(seq 1 60); do
+            STATUS=$(aws deploy get-deployment \
+              --deployment-id $DEPLOYMENT_ID \
+              --query 'deploymentInfo.status' --output text)
+            echo "[$i/60] Status: $STATUS"
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "Deployment succeeded."
+              exit 0
+            fi
+            if [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Stopped" ]; then
+              echo "Deployment $STATUS."
+              exit 1
+            fi
+            sleep 30
+          done
+          echo "Deployment still in progress after 30 min — check CodeDeploy console."
+          exit 0
