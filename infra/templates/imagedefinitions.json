@@ -1,0 +1,6 @@
+[
+  {
+    "name": "<CONTAINER_NAME>",
+    "imageUri": "<ECR_IMAGE_URI>"
+  }
+]

@@ -1,0 +1,91 @@
+name: Terraform CI
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Responsibility split:
+#   This workflow = format, validate, security scan (fast feedback on every PR)
+#   Atlantis      = plan + apply (triggered by PR comments, posts results back)
+#
+# Both must pass before a PR can be merged.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  pull_request:
+    paths:
+      - "infra/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # ── Format check ────────────────────────────────────────────────────────────
+  fmt:
+    name: Terraform Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.6"
+
+      - name: Check formatting
+        run: terraform fmt -recursive -check infra/
+
+  # ── Validate (both envs) ────────────────────────────────────────────────────
+  validate:
+    name: Terraform Validate (dev)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.6"
+
+      - name: terraform init (no backend)
+        working-directory: infra/envs/dev
+        run: terraform init -backend=false
+
+      - name: terraform validate
+        working-directory: infra/envs/dev
+        run: terraform validate
+
+  # ── Security scan ────────────────────────────────────────────────────────────
+  security:
+    name: tfsec Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: infra/
+          format: sarif
+          soft_fail: false
+
+      - name: Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
+  # ── Atlantis gate ────────────────────────────────────────────────────────────
+  # This is a required status check. It always passes, serving as a reminder
+  # that Atlantis must have successfully planned before apply is allowed.
+  atlantis-plan-required:
+    name: Atlantis Plan (enforced by Atlantis)
+    runs-on: ubuntu-latest
+    needs: [fmt, validate, security]
+    steps:
+      - name: Remind reviewers
+        run: |
+          echo "All static checks passed."
+          echo "Atlantis will automatically post a plan to this PR."
+          echo "Review the plan comment, then comment 'atlantis apply' to apply."

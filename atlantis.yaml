@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Atlantis Configuration
+#
+# GitOps workflow:
+#   1. Engineer opens a PR with infra changes
+#   2. Atlantis auto-runs `terraform plan` for affected workspaces
+#   3. Plan output is posted as a PR comment
+#   4. A designated approver reviews the plan and leaves an `atlantis apply` comment
+#   5. Atlantis applies and posts the result
+#   6. PR is merged only after successful apply
+#
+# Prerequisites (configured in the Atlantis server):
+#   - TF_VAR_db_username and TF_VAR_db_password set as server-side env vars
+#   - AWS credentials injected via IAM role (EC2/ECS instance profile)
+#   - ATLANTIS_GH_TOKEN, ATLANTIS_GH_WEBHOOK_SECRET configured
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: 3
+
+automerge: false
+parallel_plan: true
+parallel_apply: false
+
+projects:
+
+  - name: expense-tracker-dev
+    dir: infra/envs/dev
+    workspace: dev
+    terraform_version: v1.6.6
+    autoplan:
+      enabled: true
+      when_modified:
+        - "infra/envs/dev/**/*.tf"
+        - "infra/modules/**/*.tf"
+    workflow: default-with-approval
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Workflows
+# ─────────────────────────────────────────────────────────────────────────────
+workflows:
+
+  default-with-approval:
+    plan:
+      steps:
+        - env:
+            name: TF_IN_AUTOMATION
+            value: "true"
+        - init:
+            extra_args: ["-input=false", "-reconfigure"]
+        - plan:
+            extra_args: ["-input=false", "-out=tfplan"]
+    apply:
+      steps:
+        - apply:
+            extra_args: ["-input=false", "tfplan"]

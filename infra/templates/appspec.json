@@ -1,0 +1,49 @@
+{
+  "version": 0.0,
+  "Resources": [
+    {
+      "TargetService": {
+        "Type": "AWS::ECS::Service",
+        "Properties": {
+          "TaskDefinition": "<TASK_DEFINITION_ARN>",
+          "LoadBalancerInfo": {
+            "ContainerName": "<CONTAINER_NAME>",
+            "ContainerPort": 3000
+          },
+          "PlatformVersion": "LATEST",
+          "NetworkConfiguration": {
+            "AwsvpcConfiguration": {
+              "Subnets": ["<PRIVATE_APP_SUBNET_ID_1>", "<PRIVATE_APP_SUBNET_ID_2>"],
+              "SecurityGroups": ["<ECS_TASKS_SG_ID>"],
+              "AssignPublicIp": "DISABLED"
+            }
+          },
+          "CapacityProviderStrategy": [
+            {
+              "CapacityProvider": "FARGATE",
+              "Weight": 1,
+              "Base": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "Hooks": [
+    {
+      "BeforeInstall": "arn:aws:lambda:<REGION>:<ACCOUNT_ID>:function:expense-tracker-before-install"
+    },
+    {
+      "AfterInstall": "arn:aws:lambda:<REGION>:<ACCOUNT_ID>:function:expense-tracker-after-install"
+    },
+    {
+      "AfterAllowTestTraffic": "arn:aws:lambda:<REGION>:<ACCOUNT_ID>:function:expense-tracker-smoke-test"
+    },
+    {
+      "BeforeAllowTraffic": "arn:aws:lambda:<REGION>:<ACCOUNT_ID>:function:expense-tracker-before-prod-traffic"
+    },
+    {
+      "AfterAllowTraffic": "arn:aws:lambda:<REGION>:<ACCOUNT_ID>:function:expense-tracker-after-prod-traffic"
+    }
+  ]
+}
