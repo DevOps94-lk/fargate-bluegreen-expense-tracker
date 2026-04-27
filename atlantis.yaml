@@ -31,4 +31,6 @@ projects:
       enabled: true
       when_modified:
         - "infra/envs/dev/**/*.tf"
+        - "infra/envs/dev/**/*.tfvars"
         - "infra/modules/**/*.tf"
+        - "atlantis.yaml"
