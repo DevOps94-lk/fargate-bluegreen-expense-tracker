@@ -59,7 +59,7 @@ module "rds" {
   db_username              = var.db_username
   db_password              = var.db_password
   db_instance_class        = "db.t3.micro"
-  db_engine_version        = "16.3"
+  db_engine_version        = "16.4"
   db_allocated_storage     = 20
   db_max_allocated_storage = 50
 
