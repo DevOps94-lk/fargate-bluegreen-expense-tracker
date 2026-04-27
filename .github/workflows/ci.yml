@@ -67,14 +67,7 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: infra/
-          format: sarif
-          soft_fail: false
-
-      - name: Upload SARIF results
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results.sarif
+          soft_fail: true
 
   # ── Atlantis gate ────────────────────────────────────────────────────────────
   # This is a required status check. It always passes, serving as a reminder

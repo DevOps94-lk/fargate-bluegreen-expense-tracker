@@ -23,9 +23,9 @@ variable "alb_security_group_id" {
   type        = string
 }
 
-variable "rds_security_group_id" {
-  description = "Security group ID of RDS (ECS tasks need outbound access)"
-  type        = string
+variable "private_db_subnet_cidrs" {
+  description = "CIDR blocks of the private DB subnets (used for egress to RDS)"
+  type        = list(string)
 }
 
 variable "blue_target_group_arn" {

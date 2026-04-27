@@ -124,11 +124,11 @@ resource "aws_security_group" "ecs_tasks" {
   }
 
   egress {
-    description     = "PostgreSQL to RDS"
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [var.rds_security_group_id]
+    description = "PostgreSQL to RDS (private DB subnets)"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = var.private_db_subnet_cidrs
   }
 
   egress {

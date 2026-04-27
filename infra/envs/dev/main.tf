@@ -103,10 +103,10 @@ module "ecs" {
   name        = local.name
   environment = local.environment
 
-  vpc_id                 = module.vpc.vpc_id
-  private_app_subnet_ids = module.vpc.private_app_subnet_ids
-  alb_security_group_id  = module.alb.alb_security_group_id
-  rds_security_group_id  = module.rds.rds_security_group_id
+  vpc_id                  = module.vpc.vpc_id
+  private_app_subnet_ids  = module.vpc.private_app_subnet_ids
+  alb_security_group_id   = module.alb.alb_security_group_id
+  private_db_subnet_cidrs = ["10.0.21.0/24", "10.0.22.0/24"]
 
   blue_target_group_arn   = module.alb.blue_target_group_arn
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
