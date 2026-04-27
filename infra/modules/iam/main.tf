@@ -16,7 +16,7 @@ data "aws_region" "current" {}
 # ─────────────────────────────────────────────────────────────────────────────
 resource "aws_iam_role" "ecs_task_execution" {
   name        = "${var.name}-ecs-task-execution-role"
-  description = "ECS agent role — ECR pull, SSM secrets, CloudWatch logs"
+  description = "ECS agent role - ECR pull, SSM secrets, CloudWatch logs"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -73,7 +73,7 @@ resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
 # ─────────────────────────────────────────────────────────────────────────────
 resource "aws_iam_role" "ecs_task" {
   name        = "${var.name}-ecs-task-role"
-  description = "Application role — scoped to what the Expense Tracker code actually calls"
+  description = "Application role - scoped to what the Expense Tracker code actually calls"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
