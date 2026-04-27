@@ -100,49 +100,63 @@ jobs:
         env:
           TASK_DEF_ARN: ${{ steps.register-task-def.outputs.task_def_arn }}
         run: |
-          SUBNET_IDS=$(aws ecs describe-services \
-            --cluster $ECS_CLUSTER --services $ECS_SERVICE \
-            --query 'services[0].networkConfiguration.awsvpcConfiguration.subnets' \
-            --output text | tr '\t' '","' | sed 's/.*/"&"/')
-          SG_IDS=$(aws ecs describe-services \
-            --cluster $ECS_CLUSTER --services $ECS_SERVICE \
-            --query 'services[0].networkConfiguration.awsvpcConfiguration.securityGroups' \
-            --output text)
+          python3 << 'PYEOF'
+          import json, os, subprocess
 
-          cat > appspec.json << EOF
-          {
-            "version": 0.0,
-            "Resources": [{
-              "TargetService": {
-                "Type": "AWS::ECS::Service",
-                "Properties": {
-                  "TaskDefinition": "${TASK_DEF_ARN}",
-                  "LoadBalancerInfo": {
-                    "ContainerName": "${CONTAINER_NAME}",
-                    "ContainerPort": 8000
-                  },
-                  "PlatformVersion": "LATEST",
-                  "NetworkConfiguration": {
-                    "AwsvpcConfiguration": {
-                      "Subnets": [${SUBNET_IDS}],
-                      "SecurityGroups": ["${SG_IDS}"],
-                      "AssignPublicIp": "DISABLED"
-                    }
+          def aws_json(query):
+              r = subprocess.run(
+                  ['aws', 'ecs', 'describe-services',
+                   '--cluster', os.environ['ECS_CLUSTER'],
+                   '--services', os.environ['ECS_SERVICE'],
+                   '--query', query, '--output', 'json'],
+                  capture_output=True, text=True, check=True)
+              return json.loads(r.stdout)
+
+          appspec = {
+              "version": 0.0,
+              "Resources": [{
+                  "TargetService": {
+                      "Type": "AWS::ECS::Service",
+                      "Properties": {
+                          "TaskDefinition": os.environ['TASK_DEF_ARN'],
+                          "LoadBalancerInfo": {
+                              "ContainerName": os.environ['CONTAINER_NAME'],
+                              "ContainerPort": 8000
+                          },
+                          "PlatformVersion": "LATEST",
+                          "NetworkConfiguration": {
+                              "AwsvpcConfiguration": {
+                                  "Subnets": aws_json('services[0].networkConfiguration.awsvpcConfiguration.subnets'),
+                                  "SecurityGroups": aws_json('services[0].networkConfiguration.awsvpcConfiguration.securityGroups'),
+                                  "AssignPublicIp": "DISABLED"
+                              }
+                          }
+                      }
                   }
-                }
-              }
-            }]
+              }]
           }
-          EOF
+
+          with open('appspec.json', 'w') as f:
+              json.dump(appspec, f, indent=2)
+          print("Generated appspec.json")
+          PYEOF
 
       # ── Create CodeDeploy deployment ──────────────────────────────────────
       - name: Create CodeDeploy deployment
         id: codedeploy
         run: |
+          python3 -c "
+          import json
+          with open('appspec.json') as f:
+              content = f.read()
+          revision = {'revisionType': 'AppSpecContent', 'appSpecContent': {'content': content}}
+          with open('revision.json', 'w') as f:
+              json.dump(revision, f)
+          "
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name $CODEDEPLOY_APP \
             --deployment-group-name $CODEDEPLOY_GROUP \
-            --revision revisionType=AppSpecContent,appSpecContent="{content='$(cat appspec.json | jq -c .)'" \
+            --revision file://revision.json \
             --description "Deploy ${{ github.sha }} via GitHub Actions" \
             --query 'deploymentId' \
             --output text)
