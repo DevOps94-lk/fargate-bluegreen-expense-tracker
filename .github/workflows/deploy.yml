@@ -141,6 +141,31 @@ jobs:
           print("Generated appspec.json")
           PYEOF
 
+      # ── Wait for any in-progress deployment to finish ────────────────────
+      - name: Wait for existing deployment
+        run: |
+          EXISTING=$(aws deploy list-deployments \
+            --application-name $CODEDEPLOY_APP \
+            --deployment-group-name $CODEDEPLOY_GROUP \
+            --include-only-statuses InProgress \
+            --query 'deployments[0]' --output text)
+          if [ "$EXISTING" != "None" ] && [ -n "$EXISTING" ]; then
+            echo "Active deployment $EXISTING found — waiting up to 20 min..."
+            for i in $(seq 1 40); do
+              STATUS=$(aws deploy get-deployment \
+                --deployment-id $EXISTING \
+                --query 'deploymentInfo.status' --output text)
+              echo "[$i/40] $EXISTING status: $STATUS"
+              if [ "$STATUS" = "Succeeded" ] || [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Stopped" ]; then
+                echo "Previous deployment finished with: $STATUS"
+                break
+              fi
+              sleep 30
+            done
+          else
+            echo "No active deployment — proceeding."
+          fi
+
       # ── Create CodeDeploy deployment ──────────────────────────────────────
       - name: Create CodeDeploy deployment
         id: codedeploy
