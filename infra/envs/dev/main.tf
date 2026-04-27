@@ -55,15 +55,15 @@ module "rds" {
   private_db_subnet_ids = module.vpc.private_db_subnet_ids
   ecs_security_group_id = module.ecs.ecs_tasks_security_group_id
 
-  db_name              = "expense_tracker"
-  db_username          = var.db_username
-  db_password          = var.db_password
-  db_instance_class    = "db.t3.micro"
-  db_engine_version    = "16.3"
-  db_allocated_storage = 20
+  db_name                  = "expense_tracker"
+  db_username              = var.db_username
+  db_password              = var.db_password
+  db_instance_class        = "db.t3.micro"
+  db_engine_version        = "16.6"
+  db_allocated_storage     = 20
   db_max_allocated_storage = 50
 
-  multi_az                     = false  # Single-AZ in dev to save costs
+  multi_az                     = false # Single-AZ in dev to save costs
   deletion_protection          = false
   backup_retention_days        = 3
   preferred_backup_window      = "03:00-04:00"
@@ -103,20 +103,20 @@ module "ecs" {
   name        = local.name
   environment = local.environment
 
-  vpc_id                 = module.vpc.vpc_id
-  private_app_subnet_ids = module.vpc.private_app_subnet_ids
-  alb_security_group_id  = module.alb.alb_security_group_id
-  rds_security_group_id  = module.rds.rds_security_group_id
+  vpc_id                  = module.vpc.vpc_id
+  private_app_subnet_ids  = module.vpc.private_app_subnet_ids
+  alb_security_group_id   = module.alb.alb_security_group_id
+  private_db_subnet_cidrs = ["10.0.21.0/24", "10.0.22.0/24"]
 
   blue_target_group_arn   = module.alb.blue_target_group_arn
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
   task_role_arn           = module.iam.ecs_task_role_arn
 
-  container_image      = var.container_image
-  container_port       = 8000
-  container_cpu        = 512
-  container_memory     = 1024
-  desired_count        = 2
+  container_image  = var.container_image
+  container_port   = 8000
+  container_cpu    = 512
+  container_memory = 1024
+  desired_count    = 2
 
   database_url_ssm_arn = module.rds.database_url_ssm_arn
 

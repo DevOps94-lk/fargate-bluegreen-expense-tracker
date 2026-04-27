@@ -23,17 +23,6 @@ resource "aws_ecs_cluster" "this" {
   tags = merge(local.common_tags, { Name = "${var.name}-cluster" })
 }
 
-resource "aws_ecs_cluster_capacity_providers" "this" {
-  cluster_name       = aws_ecs_cluster.this.name
-  capacity_providers = ["FARGATE", "FARGATE_SPOT"]
-
-  default_capacity_provider_strategy {
-    base              = 1
-    weight            = 100
-    capacity_provider = "FARGATE"
-  }
-}
-
 # ─────────────────────────────────────────────────────────────────────────────
 # ECS Task Definition
 # Terraform creates the initial task definition; CodeDeploy manages
@@ -112,7 +101,7 @@ data "aws_region" "current" {}
 # ─────────────────────────────────────────────────────────────────────────────
 resource "aws_security_group" "ecs_tasks" {
   name        = "${var.name}-ecs-tasks-sg"
-  description = "ECS Fargate tasks — allow traffic from ALB, outbound to RDS and AWS APIs"
+  description = "ECS Fargate tasks - allow traffic from ALB, outbound to RDS and AWS APIs"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -124,11 +113,11 @@ resource "aws_security_group" "ecs_tasks" {
   }
 
   egress {
-    description     = "PostgreSQL to RDS"
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [var.rds_security_group_id]
+    description = "PostgreSQL to RDS (private DB subnets)"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = var.private_db_subnet_cidrs
   }
 
   egress {
