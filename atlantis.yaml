@@ -30,7 +30,6 @@ projects:
     autoplan:
       enabled: true
       when_modified:
-        - "infra/envs/dev/**/*.tf"
-        - "infra/envs/dev/**/*.tfvars"
-        - "infra/modules/**/*.tf"
+        - "**/*.tf"
+        - "**/*.tfvars"
         - "atlantis.yaml"
