@@ -1,7 +1,7 @@
 locals {
   name        = "expense-tracker-dev"
   environment = "dev"
-  azs         = ["ap-south-1a", "ap-south-1b"]
+  azs         = ["ap-south-1a", "ap-south-1b"] # ap-south-1 AZs
 
   tags = {
     Project     = "expense-tracker"
