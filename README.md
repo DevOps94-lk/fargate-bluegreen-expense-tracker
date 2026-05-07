@@ -15,6 +15,7 @@ A production-grade expense tracker application deployed on **AWS ECS Fargate** u
 - [Blue/Green + Canary Deployment](#bluegreen--canary-deployment)
 - [Terraform — Deep Dive](#terraform--deep-dive)
 - [Atlantis GitOps — Deep Dive](#atlantis-gitops--deep-dive)
+- [Atlantis Server Management Commands](#atlantis-server-management-commands)
 - [GitHub Actions Pipelines](#github-actions-pipelines)
 - [Security Model](#security-model)
 - [Step-by-Step Setup Guide](#step-by-step-setup-guide)
@@ -672,6 +673,62 @@ Repository Settings → Webhooks → Add webhook
 | `atlantis apply` | Apply the saved plan |
 | `atlantis apply -p expense-tracker-dev` | Apply a specific project by name |
 | `atlantis unlock` | Release the project lock |
+
+### Atlantis Server Management Commands
+
+SSH into the DigitalOcean droplet and use these commands:
+
+```bash
+# ── Connect to server ──────────────────────────────────────────
+ssh root@168.144.88.87
+
+# ── Check if Atlantis is running ───────────────────────────────
+systemctl status atlantis
+
+# ── View live Atlantis logs (Ctrl+C to exit) ───────────────────
+journalctl -u atlantis -f
+
+# ── View last 100 lines of Atlantis logs ───────────────────────
+journalctl -u atlantis -n 100 --no-pager
+
+# ── Check Atlantis version ─────────────────────────────────────
+atlantis version
+
+# ── Check Atlantis is listening on port 4141 ───────────────────
+ss -tlnp | grep 4141
+
+# ── Check Atlantis process details ────────────────────────────
+ps aux | grep atlantis
+
+# ── View environment variables (credentials) ──────────────────
+cat /etc/atlantis.env
+
+# ── Restart Atlantis (after config change) ────────────────────
+systemctl restart atlantis
+
+# ── Stop / Start Atlantis ─────────────────────────────────────
+systemctl stop atlantis
+systemctl start atlantis
+
+# ── Check disk space on server ────────────────────────────────
+df -h
+
+# ── List cloned repos (Atlantis workdir) ──────────────────────
+ls /home/atlantis/.atlantis/repos/
+
+# ── View Atlantis locks (projects currently locked) ───────────
+# Visit: http://168.144.88.87:4141/locks
+```
+
+**Common Atlantis issues and fixes:**
+
+| Symptom | Check | Fix |
+|---------|-------|-----|
+| `atlantis apply` not working | `journalctl -u atlantis -n 50` | Check `issue_comment` webhook event is delivering |
+| `0/0 projects planned` | Changed files in PR | Add/change a `.tf` file |
+| Plan uses wrong state | `terraform workspace list` output in logs | Ensure `workspace: dev` in `atlantis.yaml` |
+| Atlantis not receiving webhooks | GitHub → Settings → Webhooks → Recent Deliveries | Check payload URL and webhook secret |
+| Service crashed | `systemctl status atlantis` | `systemctl restart atlantis` then check logs |
 
 ---
 
