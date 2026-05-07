@@ -76,12 +76,12 @@ resource "aws_db_instance" "this" {
   multi_az               = var.multi_az
   port                   = 5432
 
-  backup_retention_period   = var.backup_retention_days
-  backup_window             = var.preferred_backup_window
-  maintenance_window        = var.preferred_maintenance_window
-  copy_tags_to_snapshot     = true
-  delete_automated_backups  = true
-  skip_final_snapshot       = true
+  backup_retention_period  = var.backup_retention_days
+  backup_window            = var.preferred_backup_window
+  maintenance_window       = var.preferred_maintenance_window
+  copy_tags_to_snapshot    = true
+  delete_automated_backups = true
+  skip_final_snapshot      = true
 
   deletion_protection        = var.deletion_protection
   auto_minor_version_upgrade = true
